@@ -1,64 +1,86 @@
 # Clinic Booking System
 
-A web-based appointment booking system for clinics, built with Next.js, TailwindCSS, Prisma, and Supabase.
-
-## Features
-
-- User authentication with Supabase Auth
-- Doctor listing and selection
-- Appointment booking
-- Appointment management (view, cancel)
-- Responsive design
-
-## Tech Stack
-
-- **Frontend**: Next.js, TailwindCSS, ShadcnUI
-- **Backend**: Next.js API Routes
-- **Database**: PostgreSQL with Supabase
-- **ORM**: Prisma
-- **Authentication**: Supabase Auth
+A web application for managing clinic appointments.
 
 ## Prerequisites
 
-- Node.js 18.x or later
+- Node.js (v18 or higher)
 - npm or yarn
 - Supabase account
-- PostgreSQL database (provided by Supabase)
+- PostgreSQL database
 
 ## Setup Instructions
 
 1. Clone the repository:
-   ```bash
-   git clone <repository-url>
-   cd clinic-booking
-   ```
+```bash
+git clone https://github.com/GoldStarPro/Clinic-Booking-System.git
+cd clinic-booking
+```
 
 2. Install dependencies:
+```bash
+npm install
+# or
+yarn install
+```
+
+3. Supabase Setup:
+   - Create a new project on [Supabase](https://supabase.com)
+   - Get your project credentials from Settings > API:
+     - Project URL
+     - Anon key
+     - Database connection string
+
+4. Environment Configuration:
+   - Copy `.env.example` to `.env`:
    ```bash
-   npm install
+   cp .env.example .env
+   ```
+   - Update the following values in `.env` with your Supabase project credentials:
+     - `NEXT_PUBLIC_SUPABASE_URL`: Your Supabase project URL
+     - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Your Supabase anonymous key
+     - `DATABASE_URL`: Your PostgreSQL database URL
+     - `DIRECT_URL`: Your direct database URL (same as DATABASE_URL for local development)
+
+5. Database Setup:
+   - Run Prisma migrations to create database schema:
+   ```bash
+   npx prisma migrate dev
    ```
 
-3. Set up environment variables:
-   - Copy `.env.example` to `.env`
-   - Update the following variables in `.env`:
-     ```
-     NEXT_PUBLIC_SUPABASE_URL=your-supabase-project-url
-     NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
-     SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
-     DATABASE_URL="postgresql://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT-REF].supabase.co:5432/postgres"
-     ```
+6. Start the development server:
+```bash
+npm run dev
+# or
+yarn dev
+```
 
-4. Set up the database:
-   ```bash
-   npx prisma db push
-   ```
+The application will be available at http://localhost:3000
 
-5. Start the development server:
-   ```bash
-   npm run dev
-   ```
+## Environment Variables
 
-6. Open [http://localhost:3000](http://localhost:3000) in your browser.
+- `NEXT_PUBLIC_SUPABASE_URL`: Your Supabase project URL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Your Supabase anonymous key
+- `DATABASE_URL`: Your PostgreSQL database URL
+- `DIRECT_URL`: Your direct database URL
+- `NEXT_PUBLIC_APP_URL`: Your application URL (default: http://localhost:3000)
+
+## Features
+
+- User authentication (login/register)
+- Doctor management
+- Appointment booking
+- Appointment management
+- Dashboard for patients
+
+## Tech Stack
+
+- Next.js 14
+- TypeScript
+- Tailwind CSS
+- Supabase
+- Prisma
+- PostgreSQL
 
 ## Project Structure
 
