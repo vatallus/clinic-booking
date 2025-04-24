@@ -20,6 +20,19 @@ interface Appointment {
   Doctor: Doctor
 }
 
+interface RawAppointment {
+  id: string
+  date: string
+  time: string
+  status: string
+  symptoms: string
+  doctorId: string
+  Doctor: {
+    name: string
+    specialty: string
+  }
+}
+
 export default function MyAppointments() {
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
@@ -66,21 +79,18 @@ export default function MyAppointments() {
 
       console.log('Raw appointments data:', data)
       // Transform the data to match our interface
-      const transformedData = data?.map(appointment => {
-        const doctorData = appointment.Doctor as unknown as { name: string; specialty: string }
-        return {
-          id: appointment.id,
-          date: appointment.date,
-          time: appointment.time,
-          status: appointment.status,
-          symptoms: appointment.symptoms,
-          doctorId: appointment.doctorId,
-          Doctor: {
-            name: doctorData?.name || 'Unknown Doctor',
-            specialty: doctorData?.specialty || 'Unknown Specialty'
-          }
+      const transformedData = (data as unknown as RawAppointment[]).map(appointment => ({
+        id: appointment.id,
+        date: appointment.date,
+        time: appointment.time,
+        status: appointment.status,
+        symptoms: appointment.symptoms,
+        doctorId: appointment.doctorId,
+        Doctor: {
+          name: appointment.Doctor.name,
+          specialty: appointment.Doctor.specialty
         }
-      }) || []
+      }))
       setAppointments(transformedData)
     } catch (error) {
       console.error('Error fetching appointments:', error)
