@@ -67,7 +67,10 @@ export default function MyAppointments() {
       console.log('Raw appointments data:', data)
       // Transform the data to match our interface
       const transformedData = data?.map(appointment => {
-        const doctorData = appointment.Doctor as unknown as Doctor
+        const doctorData = Array.isArray(appointment.Doctor) 
+          ? appointment.Doctor[0] 
+          : appointment.Doctor
+
         return {
           id: appointment.id,
           date: appointment.date,
@@ -75,7 +78,10 @@ export default function MyAppointments() {
           status: appointment.status,
           symptoms: appointment.symptoms,
           doctorId: appointment.doctorId,
-          Doctor: doctorData
+          Doctor: {
+            name: doctorData?.name || 'Unknown Doctor',
+            specialty: doctorData?.specialty || 'Unknown Specialty'
+          }
         }
       }) || []
       setAppointments(transformedData)
