@@ -19,7 +19,10 @@ cd clinic-booking
 
 2. Install dependencies:
 ```bash
-npm install
+   npm install
+
+   # Additional required packages
+   npm install uuid @types/uuid
 ```
 
 3. Supabase Setup:
@@ -43,6 +46,9 @@ npm install
 
 5. Database Setup:
    ```bash
+   # Apply migration schema Prisma
+   npx prisma migrate dev
+
    # Generate Prisma Client
    npx prisma generate
 
@@ -51,6 +57,10 @@ npm install
 
    # Seed the database with initial data
    npx prisma db seed
+
+   - Go to SQL Editor on Supabase
+     - Copy and paste the contents of `supabase/migrations/20240321000000_policies.sql`
+     - Run the SQL script to set up all necessary policies and permissions
    ```
 
 6. Start the development server:
