@@ -5,6 +5,11 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
+interface Doctor {
+  name: string
+  specialty: string
+}
+
 interface Appointment {
   id: string
   date: string
@@ -12,10 +17,7 @@ interface Appointment {
   status: string
   symptoms: string
   doctorId: string
-  Doctor: {
-    name: string
-    specialty: string
-  }[] | null
+  Doctor: Doctor
 }
 
 export default function MyAppointments() {
@@ -65,7 +67,7 @@ export default function MyAppointments() {
       console.log('Raw appointments data:', data)
       // Transform the data to match our interface
       const transformedData = data?.map(appointment => {
-        const doctor = appointment.Doctor as { name: string; specialty: string }
+        const doctorData = appointment.Doctor as unknown as Doctor
         return {
           id: appointment.id,
           date: appointment.date,
@@ -73,7 +75,7 @@ export default function MyAppointments() {
           status: appointment.status,
           symptoms: appointment.symptoms,
           doctorId: appointment.doctorId,
-          Doctor: doctor ? [doctor] : null
+          Doctor: doctorData
         }
       }) || []
       setAppointments(transformedData)
@@ -150,9 +152,9 @@ export default function MyAppointments() {
               <div className="flex justify-between items-start mb-2">
                 <div>
                   <h2 className="text-lg font-semibold">
-                    Dr. {appointment.Doctor?.[0]?.name || 'Unknown Doctor'}
+                    Dr. {appointment.Doctor?.name || 'Unknown Doctor'}
                   </h2>
-                  <p className="text-gray-600">{appointment.Doctor?.[0]?.specialty || 'Unknown Specialty'}</p>
+                  <p className="text-gray-600">{appointment.Doctor?.specialty || 'Unknown Specialty'}</p>
                 </div>
                 <span className={`px-2 py-1 rounded text-sm ${
                   appointment.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
