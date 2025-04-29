@@ -1,13 +1,15 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 
 interface Doctor {
+  id: string
   name: string
   specialty: string
+  description?: string
+  image?: string
 }
 
 interface Appointment {
@@ -16,29 +18,19 @@ interface Appointment {
   time: string
   status: string
   symptoms: string
+  notes?: string
   doctorId: string
-  Doctor: Doctor
-}
-
-interface RawAppointment {
-  id: string
-  date: string
-  time: string
-  status: string
-  symptoms: string
-  doctorId: string
-  Doctor: {
-    name: string
-    specialty: string
-  }
+  doctor: Doctor
+  createdAt: string
+  updatedAt: string
 }
 
 export default function MyAppointments() {
+  const router = useRouter()
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const supabase = createClientComponentClient()
-  const router = useRouter()
 
   useEffect(() => {
     fetchAppointments()
@@ -46,30 +38,28 @@ export default function MyAppointments() {
 
   const fetchAppointments = async () => {
     try {
-      // Get current user
+      setLoading(true)
+      setError('')
+
       const { data: { user }, error: userError } = await supabase.auth.getUser()
       
       if (userError || !user) {
-        console.error('Error getting user:', userError)
         throw new Error('Unauthorized')
       }
 
-      // Fetch appointments with doctor details
       const { data, error } = await supabase
         .from('Appointment')
         .select(`
-          id,
-          date,
-          time,
-          status,
-          symptoms,
-          doctorId,
-          Doctor (
+          *,
+          doctor:User!Appointment_doctorId_fkey (
+            id,
             name,
-            specialty
+            specialty,
+            description,
+            image
           )
         `)
-        .eq('patientId', user.id)
+        .or(`patientId.eq.${user.id},doctorId.eq.${user.id}`)
         .order('date', { ascending: true })
 
       if (error) {
@@ -77,35 +67,40 @@ export default function MyAppointments() {
         throw new Error('Failed to fetch appointments')
       }
 
-      console.log('Raw appointments data:', data)
-      // Transform the data to match our interface
-      const transformedData = (data as unknown as RawAppointment[]).map(appointment => ({
-        id: appointment.id,
-        date: appointment.date,
-        time: appointment.time,
-        status: appointment.status,
-        symptoms: appointment.symptoms,
-        doctorId: appointment.doctorId,
-        Doctor: {
-          name: appointment.Doctor.name,
-          specialty: appointment.Doctor.specialty
-        }
-      }))
-      setAppointments(transformedData)
+      setAppointments(data || [])
     } catch (error) {
-      console.error('Error fetching appointments:', error)
+      console.error('Error:', error)
       setError(error instanceof Error ? error.message : 'Failed to fetch appointments')
     } finally {
       setLoading(false)
     }
   }
 
-  const handleLogout = async () => {
+  const handleCancelAppointment = async (appointmentId: string) => {
     try {
-      await supabase.auth.signOut()
-      router.push('/login')
+      setLoading(true)
+      setError('')
+
+      const { error } = await supabase
+        .from('Appointment')
+        .update({ 
+          status: 'CANCELLED',
+          updatedAt: new Date().toISOString()
+        })
+        .eq('id', appointmentId)
+
+      if (error) {
+        console.error('Error cancelling appointment:', error)
+        throw new Error('Failed to cancel appointment')
+      }
+
+      // Refresh appointments list
+      await fetchAppointments()
     } catch (error) {
-      console.error('Error signing out:', error)
+      console.error('Error:', error)
+      setError(error instanceof Error ? error.message : 'Failed to cancel appointment')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -119,78 +114,76 @@ export default function MyAppointments() {
     })
   }
 
-  if (loading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <p className="text-center">Loading appointments...</p>
-      </div>
-    )
-  }
-
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">My Appointments</h1>
-        <div className="flex gap-4">
-          <Link
-            href="/book-appointment"
-            className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition-colors"
-          >
-            Book New Appointment
-          </Link>
-          <button
-            onClick={handleLogout}
-            className="bg-red-600 text-white py-2 px-4 rounded hover:bg-red-700 transition-colors"
-          >
-            Logout
-          </button>
-        </div>
-      </div>
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-2xl font-bold mb-6">My Appointments</h1>
+        
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {error}
+          </div>
+        )}
 
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          {error}
-        </div>
-      )}
-
-      {appointments.length === 0 ? (
-        <p className="text-center text-gray-600">No appointments found.</p>
-      ) : (
-        <div className="grid gap-4">
-          {appointments.map((appointment) => (
-            <div
-              key={appointment.id}
-              className="bg-white p-4 rounded-lg shadow-md"
+        {loading ? (
+          <div className="text-center py-8">Loading appointments...</div>
+        ) : appointments.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-gray-600 mb-4">You have no appointments scheduled.</p>
+            <button
+              onClick={() => router.push('/book-appointment')}
+              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
             >
-              <div className="flex justify-between items-start mb-2">
-                <div>
-                  <h2 className="text-lg font-semibold">
-                    Dr. {appointment.Doctor?.name || 'Unknown Doctor'}
-                  </h2>
-                  <p className="text-gray-600">{appointment.Doctor?.specialty || 'Unknown Specialty'}</p>
+              Book an Appointment
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {appointments.map((appointment) => (
+              <div
+                key={appointment.id}
+                className="bg-white p-6 rounded-lg shadow-md"
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h2 className="text-xl font-semibold mb-2">
+                      Dr. {appointment.doctor.name}
+                    </h2>
+                    <p className="text-gray-600 mb-1">
+                      {appointment.doctor.specialty}
+                    </p>
+                    <p className="text-gray-600 mb-1">
+                      {formatDate(appointment.date)} at {appointment.time}
+                    </p>
+                    <p className="text-gray-600 mb-1">
+                      Status: <span className="font-medium">{appointment.status}</span>
+                    </p>
+                    {appointment.symptoms && (
+                      <p className="text-gray-600 mb-1">
+                        Symptoms: {appointment.symptoms}
+                      </p>
+                    )}
+                    {appointment.notes && (
+                      <p className="text-gray-600">
+                        Notes: {appointment.notes}
+                      </p>
+                    )}
+                  </div>
+                  {appointment.status === 'PENDING' && (
+                    <button
+                      onClick={() => handleCancelAppointment(appointment.id)}
+                      className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                      disabled={loading}
+                    >
+                      Cancel
+                    </button>
+                  )}
                 </div>
-                <span className={`px-2 py-1 rounded text-sm ${
-                  appointment.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
-                  appointment.status === 'CONFIRMED' ? 'bg-green-100 text-green-800' :
-                  appointment.status === 'CANCELLED' ? 'bg-red-100 text-red-800' :
-                  'bg-gray-100 text-gray-800'
-                }`}>
-                  {appointment.status}
-                </span>
               </div>
-              <div className="text-gray-600">
-                <p>Date: {formatDate(appointment.date)}</p>
-                <p>Time: {appointment.time}</p>
-                {appointment.symptoms && (
-                  <p className="mt-2">
-                    <span className="font-semibold">Symptoms:</span> {appointment.symptoms}
-                  </p>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 } 

@@ -32,8 +32,9 @@ export default function BookAppointment() {
   const fetchDoctors = async () => {
     try {
       const { data, error } = await supabase
-        .from('Doctor')
+        .from('User')
         .select('*')
+        .eq('role', 'DOCTOR')
 
       if (error) {
         console.error('Error fetching doctors:', error)

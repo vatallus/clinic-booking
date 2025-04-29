@@ -5,7 +5,10 @@ const prisma = new PrismaClient()
 
 export async function GET() {
   try {
-    const doctors = await prisma.doctor.findMany({
+    const doctors = await prisma.user.findMany({
+      where: {
+        role: 'DOCTOR'
+      },
       orderBy: {
         name: 'asc'
       }
