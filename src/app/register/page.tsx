@@ -212,9 +212,8 @@ export default function Register() {
                   onChange={(e) => setRole(e.target.value)}
                   required
                 >
-                  <option value="">Select your role</option>
-                  <option value="patient">Patient</option>
-                  <option value="doctor">Doctor</option>
+                  <option value="PATIENT">Patient</option>
+                  <option value="DOCTOR">Doctor</option>
                 </select>
               </div>
 
