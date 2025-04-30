@@ -60,7 +60,7 @@ export async function POST(request: Request) {
     console.log('Creating user profile in database')
     try {
       const { data: userData, error: insertError } = await supabase
-        .from('users')
+        .from('User')
         .insert([
           {
             id: data.user.id,
@@ -68,7 +68,9 @@ export async function POST(request: Request) {
             name: data.user.user_metadata?.name || '',
             phone: data.user.user_metadata?.phone || '',
             address: data.user.user_metadata?.address || '',
-            role: data.user.user_metadata?.role || 'PATIENT'
+            role: data.user.user_metadata?.role || 'PATIENT',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
           }
         ])
         .select()

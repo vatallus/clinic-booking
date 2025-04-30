@@ -3,132 +3,164 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 async function main() {
-  // Clean up existing data
+  // Delete all existing records
   await prisma.appointment.deleteMany()
-  await prisma.doctor.deleteMany()
   await prisma.user.deleteMany()
 
-  // Create sample doctors with Vietnamese names and specialties
+  // Create doctors as users with DOCTOR role
   const doctors = await Promise.all([
-    prisma.doctor.create({
-      data: {
-        name: 'Bác sĩ Nguyễn Văn An',
-        specialty: 'Nội khoa',
-        description: 'Chuyên gia về các bệnh lý nội khoa, có hơn 10 năm kinh nghiệm',
-        image: '/doctors/doctor1.jpg',
-      },
-    }),
-    prisma.doctor.create({
-      data: {
-        name: 'Bác sĩ Trần Thị Bình',
-        specialty: 'Nhi khoa',
-        description: 'Chuyên gia về chăm sóc và điều trị bệnh nhi, có hơn 8 năm kinh nghiệm',
-        image: '/doctors/doctor2.jpg',
-      },
-    }),
-    prisma.doctor.create({
-      data: {
-        name: 'Bác sĩ Lê Minh Cường',
-        specialty: 'Tim mạch',
-        description: 'Chuyên gia về các bệnh lý tim mạch, có hơn 12 năm kinh nghiệm',
-        image: '/doctors/doctor3.jpg',
-      },
-    }),
-    prisma.doctor.create({
-      data: {
-        name: 'Bác sĩ Phạm Thị Dung',
-        specialty: 'Da liễu',
-        description: 'Chuyên gia về các bệnh lý da liễu, có hơn 7 năm kinh nghiệm',
-        image: '/doctors/doctor4.jpg',
-      },
-    }),
-    prisma.doctor.create({
-      data: {
-        name: 'Bác sĩ Hoàng Văn Đức',
-        specialty: 'Xương khớp',
-        description: 'Chuyên gia về các bệnh lý xương khớp, có hơn 9 năm kinh nghiệm',
-        image: '/doctors/doctor5.jpg',
-      },
-    }),
-  ])
-
-  // Create sample users with Vietnamese names
-  const users = await Promise.all([
     prisma.user.create({
       data: {
-        email: 'nguyenvana@gmail.com',
+        email: 'dr.smith@example.com',
+        name: 'John Smith',
+        role: 'DOCTOR',
+        specialty: 'Cardiology',
+        description: 'Experienced cardiologist with over 15 years of practice',
+        image: '/doctors/doctor1.jpg'
+      }
+    }),
+    prisma.user.create({
+      data: {
+        email: 'dr.jones@example.com',
+        name: 'Sarah Jones',
+        role: 'DOCTOR',
+        specialty: 'Pediatrics',
+        description: 'Caring pediatrician dedicated to children\'s health',
+        image: '/doctors/doctor2.jpg'
+      }
+    }),
+    prisma.user.create({
+      data: {
+        email: 'dr.wilson@example.com',
+        name: 'Michael Wilson',
+        role: 'DOCTOR',
+        specialty: 'Dermatology',
+        description: 'Board-certified dermatologist specializing in skin health',
+        image: '/doctors/doctor3.jpg'
+      }
+    }),
+    prisma.user.create({
+      data: {
+        email: 'dr.brown@example.com',
+        name: 'Emily Brown',
+        role: 'DOCTOR',
+        specialty: 'Neurology',
+        description: 'Expert neurologist focusing on brain and nerve disorders',
+        image: '/doctors/doctor4.jpg'
+      }
+    }),
+    prisma.user.create({
+      data: {
+        email: 'dr.davis@example.com',
+        name: 'Robert Davis',
+        role: 'DOCTOR',
+        specialty: 'Orthopedics',
+        description: 'Skilled orthopedic surgeon with expertise in joint replacement',
+        image: '/doctors/doctor5.jpg'
+      }
+    })
+  ])
+
+  // Create patients
+  const patients = await Promise.all([
+    prisma.user.create({
+      data: {
+        email: 'patient1@example.com',
         name: 'Nguyễn Văn A',
         role: 'PATIENT',
         phone: '0901234567',
-        address: '123 Đường ABC, Quận 1, TP.HCM',
-      },
+        address: '123 Đường ABC, Quận 1, TP.HCM'
+      }
     }),
     prisma.user.create({
       data: {
-        email: 'tranthib@gmail.com',
+        email: 'patient2@example.com',
         name: 'Trần Thị B',
         role: 'PATIENT',
         phone: '0902345678',
-        address: '456 Đường XYZ, Quận 2, TP.HCM',
-      },
+        address: '456 Đường XYZ, Quận 2, TP.HCM'
+      }
     }),
     prisma.user.create({
       data: {
-        email: 'admin@phongkham.com',
-        name: 'Quản trị viên',
-        role: 'ADMIN',
+        email: 'patient3@example.com',
+        name: 'Lê Văn C',
+        role: 'PATIENT',
         phone: '0903456789',
-        address: '789 Đường DEF, Quận 3, TP.HCM',
-      },
-    }),
+        address: '789 Đường DEF, Quận 3, TP.HCM'
+      }
+    })
   ])
 
-  // Create sample appointments with more realistic dates and times
+  // Create admin
+  const admin = await prisma.user.create({
+    data: {
+      email: 'admin@clinic.com',
+      name: 'Admin',
+      role: 'ADMIN',
+      phone: '0909999999',
+      address: 'Clinic Headquarters'
+    }
+  })
+
+  // Create appointments
   const appointments = await Promise.all([
     prisma.appointment.create({
       data: {
-        patientId: users[0].id,
+        patientId: patients[0].id,
         doctorId: doctors[0].id,
         date: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
         time: '09:00',
         status: 'PENDING',
         notes: 'Khám sức khỏe định kỳ',
-        symptoms: 'Đau đầu, mệt mỏi',
-      },
+        symptoms: 'Đau đầu, mệt mỏi'
+      }
     }),
     prisma.appointment.create({
       data: {
-        patientId: users[1].id,
+        patientId: patients[1].id,
         doctorId: doctors[1].id,
         date: new Date(Date.now() + 48 * 60 * 60 * 1000), // Day after tomorrow
         time: '14:30',
         status: 'CONFIRMED',
         notes: 'Tái khám sau điều trị',
-        symptoms: 'Sốt nhẹ, ho',
-      },
+        symptoms: 'Sốt nhẹ, ho'
+      }
     }),
     prisma.appointment.create({
       data: {
-        patientId: users[0].id,
+        patientId: patients[2].id,
         doctorId: doctors[2].id,
         date: new Date(Date.now() + 72 * 60 * 60 * 1000), // 3 days from now
         time: '10:15',
         status: 'PENDING',
-        notes: 'Kiểm tra huyết áp',
-        symptoms: 'Huyết áp không ổn định',
-      },
+        notes: 'Kiểm tra da liễu',
+        symptoms: 'Nổi mẩn đỏ, ngứa'
+      }
     }),
+    prisma.appointment.create({
+      data: {
+        patientId: patients[0].id,
+        doctorId: doctors[3].id,
+        date: new Date(Date.now() + 96 * 60 * 60 * 1000), // 4 days from now
+        time: '15:45',
+        status: 'COMPLETED',
+        notes: 'Khám thần kinh',
+        symptoms: 'Đau đầu, chóng mặt'
+      }
+    })
   ])
 
-  console.log('Seed data created successfully!')
-  console.log('Doctors:', doctors)
-  console.log('Users:', users)
-  console.log('Appointments:', appointments)
+  console.log('Database has been seeded with:')
+  console.log('-', doctors.length, 'doctors')
+  console.log('-', patients.length, 'patients')
+  console.log('- 1 admin')
+  console.log('-', appointments.length, 'appointments')
 }
 
 main()
   .catch((e) => {
-    console.error('Error seeding data:', e)
+    console.error(e)
     process.exit(1)
   })
   .finally(async () => {

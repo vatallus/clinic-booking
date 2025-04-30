@@ -51,7 +51,7 @@ export async function POST(request: Request) {
     // Get user profile from database
     console.log('Getting user profile from database')
     const { data: userData, error: userError } = await supabase
-      .from('users')
+      .from('User')
       .select('*')
       .eq('id', data.user.id)
       .single()
@@ -69,7 +69,7 @@ export async function POST(request: Request) {
       try {
         // Create new user profile
         const { data: newUser, error: createError } = await supabase
-          .from('users')
+          .from('User')
           .insert([
             {
               id: data.user.id,
@@ -77,7 +77,9 @@ export async function POST(request: Request) {
               name: data.user.user_metadata?.name || '',
               phone: data.user.user_metadata?.phone || '',
               address: data.user.user_metadata?.address || '',
-              role: data.user.user_metadata?.role || 'PATIENT'
+              role: data.user.user_metadata?.role || 'PATIENT',
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
             }
           ])
           .select()
@@ -110,7 +112,7 @@ export async function POST(request: Request) {
     // Check if user has appointments
     console.log('Checking user appointments')
     const { data: appointments, error: appointmentsError } = await supabase
-      .from('appointments')
+      .from('Appointment')
       .select('*')
       .eq('patientId', userData.id)
 

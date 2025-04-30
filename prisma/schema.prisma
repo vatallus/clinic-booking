@@ -21,20 +21,13 @@ model User {
   role          Role      @default(PATIENT)
   phone         String?
   address       String?
-  appointments  Appointment[]
+  specialty     String?
+  description   String?
+  image         String?
+  patientAppointments Appointment[] @relation("PatientAppointments")
+  doctorAppointments  Appointment[] @relation("DoctorAppointments")
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-}
-
-model Doctor {
-  id          String    @id @default(uuid())
-  name        String
-  specialty   String
-  description String?
-  image       String?
-  appointments Appointment[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
 }
 
 model Appointment {
@@ -46,8 +39,8 @@ model Appointment {
   status    Status   @default(PENDING)
   notes     String?
   symptoms  String?
-  patient   User     @relation(fields: [patientId], references: [id])
-  doctor    Doctor   @relation(fields: [doctorId], references: [id])
+  patient   User     @relation("PatientAppointments", fields: [patientId], references: [id])
+  doctor    User     @relation("DoctorAppointments", fields: [doctorId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -57,6 +50,7 @@ model Appointment {
 
 enum Role {
   PATIENT
+  DOCTOR
   ADMIN
 }
 

@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
-import { supabase } from '@/lib/supabase'
-
-const prisma = new PrismaClient()
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
 
 export async function GET(request: Request) {
   try {
-    // Get the current user from Supabase
+    const supabase = createRouteHandlerClient({ cookies })
+    
+    // Get the current user
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
@@ -14,17 +14,28 @@ export async function GET(request: Request) {
     }
 
     // Fetch appointments for the current user
-    const appointments = await prisma.appointment.findMany({
-      where: {
-        patientId: user.id
-      },
-      include: {
-        doctor: true
-      },
-      orderBy: {
-        date: 'asc'
-      }
-    })
+    const { data: appointments, error } = await supabase
+      .from('Appointment')
+      .select(`
+        *,
+        doctor:User!Appointment_doctorId_fkey (
+          id,
+          name,
+          specialty,
+          description,
+          image
+        )
+      `)
+      .or(`patientId.eq.${user.id},doctorId.eq.${user.id}`)
+      .order('date', { ascending: true })
+
+    if (error) {
+      console.error('Error fetching appointments:', error)
+      return NextResponse.json(
+        { error: 'Failed to fetch appointments' },
+        { status: 500 }
+      )
+    }
 
     return NextResponse.json(appointments)
   } catch (error) {
@@ -38,6 +49,9 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    const supabase = createRouteHandlerClient({ cookies })
+    
+    // Get the current user
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
@@ -45,9 +59,9 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { doctorId, date, time, notes } = body
+    const { doctorId, date, time, symptoms, notes } = body
 
-    if (!doctorId || !date || !time) {
+    if (!doctorId || !date || !time || !symptoms) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -55,19 +69,40 @@ export async function POST(request: Request) {
     }
 
     // Create new appointment
-    const appointment = await prisma.appointment.create({
-      data: {
-        patientId: user.id,
-        doctorId,
-        date: new Date(date),
-        time,
-        notes,
-        status: 'PENDING'
-      },
-      include: {
-        doctor: true
-      }
-    })
+    const { data: appointment, error } = await supabase
+      .from('Appointment')
+      .insert([
+        {
+          patientId: user.id,
+          doctorId,
+          date: new Date(date).toISOString(),
+          time,
+          symptoms,
+          notes,
+          status: 'PENDING',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+      ])
+      .select(`
+        *,
+        doctor:User!Appointment_doctorId_fkey (
+          id,
+          name,
+          specialty,
+          description,
+          image
+        )
+      `)
+      .single()
+
+    if (error) {
+      console.error('Error creating appointment:', error)
+      return NextResponse.json(
+        { error: 'Failed to create appointment' },
+        { status: 500 }
+      )
+    }
 
     return NextResponse.json(appointment)
   } catch (error) {
