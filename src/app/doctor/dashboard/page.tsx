@@ -3,9 +3,12 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import Link from 'next/link'
 import { HeroSection } from '@/components/HeroSection'
 import { StatsCard } from '@/components/StatsCard'
 import { AppointmentCard } from '@/components/AppointmentCard'
+import { AppointmentDetailModal } from '@/components/AppointmentDetailModal'
+import { useTheme } from '@/components/ThemeProvider'
 
 interface Patient {
   name: string
@@ -19,16 +22,20 @@ interface Appointment {
   time: string
   status: string
   symptoms: string | null
+  notes: string | null
   patient: Patient
 }
 
 export default function DoctorDashboard() {
   const router = useRouter()
   const supabase = createClientComponentClient()
+  const { colors } = useTheme()
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [userRole, setUserRole] = useState('')
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
   const [filterType, setFilterType] = useState('ALL') // ALL, TODAY, WEEK, MONTH
   const [filterStatus, setFilterStatus] = useState('ALL') // ALL, PENDING, CONFIRMED, CANCELLED, COMPLETED
 
@@ -119,6 +126,7 @@ export default function DoctorDashboard() {
           time,
           status,
           symptoms,
+          notes,
           patient:User!Appointment_patientId_fkey (
             name,
             email
@@ -147,7 +155,6 @@ export default function DoctorDashboard() {
       }
 
       const transformedData: Appointment[] = data?.map(appointment => {
-        // Get the first patient from the array if it exists
         const patientData = Array.isArray(appointment.patient) ? appointment.patient[0] : appointment.patient
         
         return {
@@ -196,73 +203,54 @@ export default function DoctorDashboard() {
     }
   }
 
+  const handleViewDetails = (appointment: Appointment) => {
+    setSelectedAppointment(appointment)
+    setIsModalOpen(true)
+  }
+
   if (userRole !== 'DOCTOR') {
     return null
   }
 
   return (
     <div className="space-y-8">
-      {/* Hero Section */}
-      <HeroSection
-        title="Chào mừng Bác sĩ"
-        subtitle="Quản lý lịch hẹn và chăm sóc bệnh nhân của bạn một cách hiệu quả"
-        imageUrl="/images/doctor-hero.jpg"
-        role="doctor"
-      />
-
-      {/* Navigation Buttons */}
-      <div className="flex flex-wrap gap-4">
+      {/* Header with Logout Button */}
+      <div className="flex justify-end">
         <button
           onClick={handleLogout}
           className="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors"
         >
-          Đăng xuất
+          Logout
         </button>
       </div>
 
-      {/* Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-gray-700 mb-2" htmlFor="filterType">
-            Lọc theo thời gian
-          </label>
-          <select
-            id="filterType"
-            className="w-full p-2 border border-gray-300 rounded"
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
-          >
-            <option value="ALL">Tất cả</option>
-            <option value="TODAY">Hôm nay</option>
-            <option value="WEEK">Tuần này</option>
-            <option value="MONTH">Tháng này</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-gray-700 mb-2" htmlFor="filterStatus">
-            Lọc theo trạng thái
-          </label>
-          <select
-            id="filterStatus"
-            className="w-full p-2 border border-gray-300 rounded"
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-          >
-            <option value="ALL">Tất cả</option>
-            <option value="PENDING">Chờ xác nhận</option>
-            <option value="CONFIRMED">Đã xác nhận</option>
-            <option value="CANCELLED">Đã hủy</option>
-            <option value="COMPLETED">Đã hoàn thành</option>
-          </select>
-        </div>
-      </div>
+      {/* Hero Section */}
+      <HeroSection
+        title="Welcome to Doctor Dashboard"
+        subtitle="Manage your appointments and provide quality healthcare services"
+        imageUrl="/images/doctor-hero.jpg"
+        role="doctor"
+        actions={[
+          {
+            label: "View Schedule",
+            href: "#",
+            className: "bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"
+          },
+          {
+            label: "Manage Patients",
+            href: "#",
+            className: "bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors"
+          }
+        ]}
+      />
 
       {/* Stats Section */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         <StatsCard
-          title="Lịch hẹn hôm nay"
-          value={appointments.filter(a => new Date(a.date).toDateString() === new Date().toDateString()).length.toString()}
+          title="Today's Appointments"
+          value={appointments.filter(a => 
+            new Date(a.date).toDateString() === new Date().toDateString()
+          ).length.toString()}
           icon={
             <svg
               className="h-6 w-6"
@@ -278,11 +266,15 @@ export default function DoctorDashboard() {
               />
             </svg>
           }
-          trend={{ value: 5, isPositive: true }}
+          trend={{ value: 10, isPositive: true }}
+          onClick={() => {
+            setFilterType('TODAY')
+            setFilterStatus('ALL')
+          }}
         />
         <StatsCard
-          title="Bệnh nhân mới"
-          value={appointments.filter(a => a.status === 'PENDING').length.toString()}
+          title="Total Patients"
+          value={new Set(appointments.map(a => a.patientId)).size.toString()}
           icon={
             <svg
               className="h-6 w-6"
@@ -298,10 +290,11 @@ export default function DoctorDashboard() {
               />
             </svg>
           }
+          onClick={() => router.push('/doctor/patients')}
         />
         <StatsCard
-          title="Đánh giá trung bình"
-          value="4.8"
+          title="Completed Appointments"
+          value={appointments.filter(a => a.status === 'COMPLETED').length.toString()}
           icon={
             <svg
               className="h-6 w-6"
@@ -313,25 +306,68 @@ export default function DoctorDashboard() {
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
           }
+          onClick={() => {
+            setFilterType('ALL')
+            setFilterStatus('COMPLETED')
+          }}
         />
       </div>
 
       {/* Appointments Section */}
       <div className="space-y-4">
-        <h2 className="text-2xl font-bold">Lịch hẹn hôm nay</h2>
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold">All Appointments</h2>
+          <div className="grid grid-cols-2 gap-4">
+            <select
+              id="filterType"
+              className="p-2 rounded-lg border transition-colors focus:outline-none focus:ring-2"
+              style={{
+                backgroundColor: colors.background,
+                borderColor: `${colors.primary}40`,
+                color: colors.text,
+              }}
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value)}
+            >
+              <option value="ALL">All Time</option>
+              <option value="TODAY">Today</option>
+              <option value="WEEK">This Week</option>
+              <option value="MONTH">This Month</option>
+            </select>
+
+            <select
+              id="filterStatus"
+              className="p-2 rounded-lg border transition-colors focus:outline-none focus:ring-2"
+              style={{
+                backgroundColor: colors.background,
+                borderColor: `${colors.primary}40`,
+                color: colors.text,
+              }}
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+            >
+              <option value="ALL">All Status</option>
+              <option value="PENDING">Pending</option>
+              <option value="CONFIRMED">Confirmed</option>
+              <option value="CANCELLED">Cancelled</option>
+              <option value="COMPLETED">Completed</option>
+            </select>
+          </div>
+        </div>
+
         {loading ? (
-          <div className="text-center py-8">Đang tải lịch hẹn...</div>
+          <div className="text-center py-8">Loading appointments...</div>
         ) : error ? (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
             {error}
           </div>
         ) : appointments.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-gray-600">Không có lịch hẹn nào.</p>
+            <p className="text-gray-600">You don't have any appointments yet.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -339,14 +375,14 @@ export default function DoctorDashboard() {
               <AppointmentCard
                 key={appointment.id}
                 patientName={appointment.patient.name}
-                doctorName="Bạn"
+                doctorName="You"
                 date={new Date(appointment.date).toLocaleDateString()}
                 time={appointment.time}
                 status={appointment.status.toLowerCase() as "pending" | "confirmed" | "completed" | "cancelled"}
                 actionLabel={
-                  appointment.status === 'PENDING' ? 'Xác nhận' :
-                  appointment.status === 'CONFIRMED' ? 'Bắt đầu khám' :
-                  'Xem chi tiết'
+                  appointment.status === 'PENDING' ? 'Confirm' :
+                  appointment.status === 'CONFIRMED' ? 'Mark as Completed' :
+                  'View Details'
                 }
                 onAction={() => {
                   if (appointment.status === 'PENDING') {
@@ -354,14 +390,32 @@ export default function DoctorDashboard() {
                   } else if (appointment.status === 'CONFIRMED') {
                     handleStatusUpdate(appointment.id, 'COMPLETED')
                   } else {
-                    router.push(`/doctor/appointment/${appointment.id}`)
+                    handleViewDetails(appointment)
                   }
                 }}
+                onViewDetails={() => handleViewDetails(appointment)}
+                showViewDetails={appointment.status !== 'COMPLETED'}
               />
             ))}
           </div>
         )}
       </div>
+
+      {/* Appointment Detail Modal */}
+      {selectedAppointment && (
+        <AppointmentDetailModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          appointment={{
+            patientName: selectedAppointment.patient.name,
+            date: new Date(selectedAppointment.date).toLocaleDateString(),
+            time: selectedAppointment.time,
+            status: selectedAppointment.status.toLowerCase() as "pending" | "confirmed" | "completed" | "cancelled",
+            symptoms: selectedAppointment.symptoms || 'No symptoms provided',
+            notes: selectedAppointment.notes || 'No notes available'
+          }}
+        />
+      )}
     </div>
   )
 } 

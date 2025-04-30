@@ -10,6 +10,8 @@ interface AppointmentCardProps {
   status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
   actionLabel: string;
   onAction: () => void;
+  onViewDetails?: () => void;
+  showViewDetails?: boolean;
 }
 
 export function AppointmentCard({
@@ -20,6 +22,8 @@ export function AppointmentCard({
   status,
   actionLabel,
   onAction,
+  onViewDetails,
+  showViewDetails = false,
 }: AppointmentCardProps) {
   const { colors } = useTheme();
 
@@ -108,16 +112,31 @@ export function AppointmentCard({
         </div>
       </div>
 
-      <button
-        onClick={onAction}
-        className="w-full py-2 px-4 rounded-lg font-medium transition-colors"
-        style={{
-          backgroundColor: colors.primary,
-          color: 'white',
-        }}
-      >
-        {actionLabel}
-      </button>
+      <div className="flex gap-4">
+        <button
+          onClick={onAction}
+          className="flex-1 py-2 px-4 rounded-lg font-medium transition-colors"
+          style={{
+            backgroundColor: colors.primary,
+            color: 'white',
+          }}
+        >
+          {actionLabel}
+        </button>
+        {showViewDetails && onViewDetails && (
+          <button
+            onClick={onViewDetails}
+            className="flex-1 py-2 px-4 rounded-lg font-medium transition-colors"
+            style={{
+              backgroundColor: colors.background,
+              color: colors.text,
+              border: `1px solid ${colors.primary}20`,
+            }}
+          >
+            View Details
+          </button>
+        )}
+      </div>
     </div>
   );
 } 
