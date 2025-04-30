@@ -16,6 +16,8 @@ DROP POLICY IF EXISTS "Admin can manage all users" ON "User";
 DROP POLICY IF EXISTS "Admin can view patient info in appointments" ON "User";
 DROP POLICY IF EXISTS "Doctors can view their appointments" ON "Appointment";
 DROP POLICY IF EXISTS "Doctors can update appointment status" ON "Appointment";
+DROP POLICY IF EXISTS "Admin can view all patients" ON "User";
+DROP POLICY IF EXISTS "Admin can view all users" ON "User";
 
 -- Cấp quyền truy cập
 GRANT USAGE ON SCHEMA public TO postgres, anon, authenticated, service_role;
@@ -77,8 +79,20 @@ CREATE POLICY "Admin can manage all users"
 ON "User" 
 FOR ALL 
 TO authenticated
-USING (auth.jwt() ->> 'role' = 'ADMIN')
-WITH CHECK (auth.jwt() ->> 'role' = 'ADMIN');
+USING (
+  EXISTS (
+    SELECT 1 FROM "User" u
+    WHERE u.id = auth.uid()::text 
+    AND u.role = 'ADMIN'
+  )
+)
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM "User" u
+    WHERE u.id = auth.uid()::text 
+    AND u.role = 'ADMIN'
+  )
+);
 
 -- Cho phép admin xem thông tin tất cả patients
 CREATE POLICY "Admin can view all patients" 
@@ -146,4 +160,48 @@ USING (
 WITH CHECK (
   "doctorId" = auth.uid()::text 
   AND (auth.jwt() ->> 'role' = 'DOCTOR')
+);
+
+-- Tạo policy riêng cho SELECT để đảm bảo admin có thể xem tất cả users
+CREATE POLICY "Admin can view all users" 
+ON "User" 
+FOR SELECT 
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM "User" u
+    WHERE u.id = auth.uid()::text 
+    AND u.role = 'ADMIN'
+  )
+);
+
+-- Tạo lại các policy cơ bản
+-- Cho phép admin xem tất cả users
+CREATE POLICY "Admin can view all users" 
+ON "User" 
+FOR SELECT 
+TO authenticated
+USING (
+  (SELECT role FROM "User" WHERE id = auth.uid()::text) = 'ADMIN'
+);
+
+-- Cho phép admin cập nhật tất cả users
+CREATE POLICY "Admin can update all users" 
+ON "User" 
+FOR UPDATE 
+TO authenticated
+USING (
+  (SELECT role FROM "User" WHERE id = auth.uid()::text) = 'ADMIN'
+)
+WITH CHECK (
+  (SELECT role FROM "User" WHERE id = auth.uid()::text) = 'ADMIN'
+);
+
+-- Cho phép admin xóa tất cả users
+CREATE POLICY "Admin can delete all users" 
+ON "User" 
+FOR DELETE 
+TO authenticated
+USING (
+  (SELECT role FROM "User" WHERE id = auth.uid()::text) = 'ADMIN'
 ); 
