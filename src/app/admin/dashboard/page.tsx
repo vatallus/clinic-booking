@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import Link from 'next/link'
 
 interface Patient {
   name: string
@@ -231,12 +232,20 @@ export default function AdminDashboard() {
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-        <button
-          onClick={handleLogout}
-          className="bg-red-600 text-white py-2 px-4 rounded hover:bg-red-700 transition-colors"
-        >
-          Logout
-        </button>
+        <div className="flex gap-4">
+          <Link
+            href="/admin/users"
+            className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition-colors"
+          >
+            Manage Users
+          </Link>
+          <button
+            onClick={handleLogout}
+            className="bg-red-600 text-white py-2 px-4 rounded hover:bg-red-700 transition-colors"
+          >
+            Logout
+          </button>
+        </div>
       </div>
 
       <div className="bg-white p-6 rounded-lg shadow-md mb-8">

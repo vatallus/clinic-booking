@@ -77,7 +77,8 @@ CREATE POLICY "Admin can manage all users"
 ON "User" 
 FOR ALL 
 TO authenticated
-USING (auth.jwt() ->> 'role' = 'ADMIN');
+USING (auth.jwt() ->> 'role' = 'ADMIN')
+WITH CHECK (auth.jwt() ->> 'role' = 'ADMIN');
 
 -- Cho phép admin xem thông tin tất cả patients
 CREATE POLICY "Admin can view all patients" 
