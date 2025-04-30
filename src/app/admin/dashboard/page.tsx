@@ -98,20 +98,11 @@ export default function AdminDashboard() {
         end.setHours(23, 59, 59, 999)
         break
       case 'MONTH':
-        // Set start to first day of current month
         start.setDate(1)
         start.setHours(0, 0, 0, 0)
-        
-        // Set end to last day of current month
         end.setMonth(end.getMonth() + 1)
         end.setDate(0)
         end.setHours(23, 59, 59, 999)
-        
-        // Log the date range for debugging
-        console.log('Month filter range:', {
-          start: start.toISOString(),
-          end: end.toISOString()
-        })
         break
       default:
         return null
@@ -171,9 +162,6 @@ export default function AdminDashboard() {
 
       // Transform the data to match our interface
       const transformedData: Appointment[] = data?.map(appointment => {
-        // Log the raw data to debug
-        console.log('Raw appointment data:', appointment)
-
         // Handle patient data
         let patientName = 'Unknown'
         let patientEmail = 'Unknown'
@@ -205,7 +193,6 @@ export default function AdminDashboard() {
         }
       }) || []
 
-      console.log('Fetched appointments:', transformedData)
       setAppointments(transformedData)
     } catch (error) {
       console.error('Error fetching appointments:', error)
@@ -221,25 +208,6 @@ export default function AdminDashboard() {
       router.push('/login')
     } catch (error) {
       console.error('Error signing out:', error)
-    }
-  }
-
-  const handleDeleteAppointment = async (appointmentId: string) => {
-    try {
-      const { error } = await supabase
-        .from('Appointment')
-        .delete()
-        .eq('id', appointmentId)
-
-      if (error) {
-        throw new Error('Failed to delete appointment')
-      }
-
-      // Refresh the appointments list
-      fetchAppointments()
-    } catch (error) {
-      console.error('Error deleting appointment:', error)
-      setError(error instanceof Error ? error.message : 'Failed to delete appointment')
     }
   }
 
@@ -331,7 +299,6 @@ export default function AdminDashboard() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                   <th className="hidden md:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Symptoms</th>
                   <th className="hidden md:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -366,17 +333,6 @@ export default function AdminDashboard() {
                     </td>
                     <td className="hidden md:table-cell px-6 py-4">
                       <div className="text-sm text-gray-900">{appointment.notes || 'N/A'}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button
-                        onClick={() => handleDeleteAppointment(appointment.id)}
-                        className="text-red-600 hover:text-red-900 transition-colors"
-                        title="Delete"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                        </svg>
-                      </button>
                     </td>
                   </tr>
                 ))}
