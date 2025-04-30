@@ -194,6 +194,13 @@ export default function BookAppointment() {
             {loading ? 'Booking...' : 'Book Appointment'}
           </button>
         </form>
+        
+        <button
+          onClick={() => router.push('/patient/dashboard')}
+          className="w-full mt-4 bg-gray-500 text-white py-2 px-4 rounded hover:bg-gray-600"
+        >
+          Back to Dashboard
+        </button>
       </div>
     </div>
   )
