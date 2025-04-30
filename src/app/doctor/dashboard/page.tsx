@@ -3,6 +3,9 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { HeroSection } from '@/components/HeroSection'
+import { StatsCard } from '@/components/StatsCard'
+import { AppointmentCard } from '@/components/AppointmentCard'
 
 interface Patient {
   name: string
@@ -198,141 +201,167 @@ export default function DoctorDashboard() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Doctor Dashboard</h1>
+    <div className="space-y-8">
+      {/* Hero Section */}
+      <HeroSection
+        title="Chào mừng Bác sĩ"
+        subtitle="Quản lý lịch hẹn và chăm sóc bệnh nhân của bạn một cách hiệu quả"
+        imageUrl="/images/doctor-hero.jpg"
+        role="doctor"
+      />
+
+      {/* Navigation Buttons */}
+      <div className="flex flex-wrap gap-4">
         <button
           onClick={handleLogout}
-          className="bg-red-600 text-white py-2 px-4 rounded hover:bg-red-700 transition-colors"
+          className="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors"
         >
-          Logout
+          Đăng xuất
         </button>
       </div>
 
-      <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <div>
-            <label className="block text-gray-700 mb-2" htmlFor="filterType">
-              Filter by Time Period
-            </label>
-            <select
-              id="filterType"
-              className="w-full p-2 border border-gray-300 rounded"
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
-            >
-              <option value="ALL">All Time</option>
-              <option value="TODAY">Today</option>
-              <option value="WEEK">This Week</option>
-              <option value="MONTH">This Month</option>
-            </select>
-          </div>
+      {/* Filters */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-gray-700 mb-2" htmlFor="filterType">
+            Lọc theo thời gian
+          </label>
+          <select
+            id="filterType"
+            className="w-full p-2 border border-gray-300 rounded"
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value)}
+          >
+            <option value="ALL">Tất cả</option>
+            <option value="TODAY">Hôm nay</option>
+            <option value="WEEK">Tuần này</option>
+            <option value="MONTH">Tháng này</option>
+          </select>
+        </div>
 
-          <div>
-            <label className="block text-gray-700 mb-2" htmlFor="filterStatus">
-              Filter by Status
-            </label>
-            <select
-              id="filterStatus"
-              className="w-full p-2 border border-gray-300 rounded"
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-            >
-              <option value="ALL">All Statuses</option>
-              <option value="PENDING">Pending</option>
-              <option value="CONFIRMED">Confirmed</option>
-              <option value="CANCELLED">Cancelled</option>
-              <option value="COMPLETED">Completed</option>
-            </select>
-          </div>
+        <div>
+          <label className="block text-gray-700 mb-2" htmlFor="filterStatus">
+            Lọc theo trạng thái
+          </label>
+          <select
+            id="filterStatus"
+            className="w-full p-2 border border-gray-300 rounded"
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+          >
+            <option value="ALL">Tất cả</option>
+            <option value="PENDING">Chờ xác nhận</option>
+            <option value="CONFIRMED">Đã xác nhận</option>
+            <option value="CANCELLED">Đã hủy</option>
+            <option value="COMPLETED">Đã hoàn thành</option>
+          </select>
         </div>
       </div>
 
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          {error}
-        </div>
-      )}
+      {/* Stats Section */}
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        <StatsCard
+          title="Lịch hẹn hôm nay"
+          value={appointments.filter(a => new Date(a.date).toDateString() === new Date().toDateString()).length.toString()}
+          icon={
+            <svg
+              className="h-6 w-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
+            </svg>
+          }
+          trend={{ value: 5, isPositive: true }}
+        />
+        <StatsCard
+          title="Bệnh nhân mới"
+          value={appointments.filter(a => a.status === 'PENDING').length.toString()}
+          icon={
+            <svg
+              className="h-6 w-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+              />
+            </svg>
+          }
+        />
+        <StatsCard
+          title="Đánh giá trung bình"
+          value="4.8"
+          icon={
+            <svg
+              className="h-6 w-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+              />
+            </svg>
+          }
+        />
+      </div>
 
-      {loading ? (
-        <div className="text-center py-8">Loading appointments...</div>
-      ) : appointments.length === 0 ? (
-        <div className="text-center py-8">
-          <p className="text-gray-600">No appointments scheduled.</p>
-        </div>
-      ) : (
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="hidden md:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Symptoms</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {appointments.map((appointment) => (
-                  <tr key={appointment.id}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{appointment.patient.name}</div>
-                      <div className="text-sm text-gray-500">{appointment.patient.email}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{new Date(appointment.date).toLocaleDateString()}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{appointment.time}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        appointment.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
-                        appointment.status === 'CONFIRMED' ? 'bg-green-100 text-green-800' :
-                        appointment.status === 'CANCELLED' ? 'bg-red-100 text-red-800' :
-                        'bg-blue-100 text-blue-800'
-                      }`}>
-                        {appointment.status}
-                      </span>
-                    </td>
-                    <td className="hidden md:table-cell px-6 py-4">
-                      <div className="text-sm text-gray-900">{appointment.symptoms || 'N/A'}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      {appointment.status === 'PENDING' && (
-                        <div className="space-x-2">
-                          <button
-                            onClick={() => handleStatusUpdate(appointment.id, 'CONFIRMED')}
-                            className="text-green-600 hover:text-green-900"
-                          >
-                            Confirm
-                          </button>
-                          <button
-                            onClick={() => handleStatusUpdate(appointment.id, 'CANCELLED')}
-                            className="text-red-600 hover:text-red-900"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      )}
-                      {appointment.status === 'CONFIRMED' && (
-                        <button
-                          onClick={() => handleStatusUpdate(appointment.id, 'COMPLETED')}
-                          className="text-blue-600 hover:text-blue-900"
-                        >
-                          Mark as Complete
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      {/* Appointments Section */}
+      <div className="space-y-4">
+        <h2 className="text-2xl font-bold">Lịch hẹn hôm nay</h2>
+        {loading ? (
+          <div className="text-center py-8">Đang tải lịch hẹn...</div>
+        ) : error ? (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+            {error}
           </div>
-        </div>
-      )}
+        ) : appointments.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-gray-600">Không có lịch hẹn nào.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {appointments.map((appointment) => (
+              <AppointmentCard
+                key={appointment.id}
+                patientName={appointment.patient.name}
+                doctorName="Bạn"
+                date={new Date(appointment.date).toLocaleDateString()}
+                time={appointment.time}
+                status={appointment.status.toLowerCase() as "pending" | "confirmed" | "completed" | "cancelled"}
+                actionLabel={
+                  appointment.status === 'PENDING' ? 'Xác nhận' :
+                  appointment.status === 'CONFIRMED' ? 'Bắt đầu khám' :
+                  'Xem chi tiết'
+                }
+                onAction={() => {
+                  if (appointment.status === 'PENDING') {
+                    handleStatusUpdate(appointment.id, 'CONFIRMED')
+                  } else if (appointment.status === 'CONFIRMED') {
+                    handleStatusUpdate(appointment.id, 'COMPLETED')
+                  } else {
+                    router.push(`/doctor/appointment/${appointment.id}`)
+                  }
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 } 

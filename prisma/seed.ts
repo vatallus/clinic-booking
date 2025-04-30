@@ -12,7 +12,7 @@ async function main() {
     prisma.user.create({
       data: {
         email: 'dr.smith@example.com',
-        name: 'Dr. John Smith',
+        name: 'John Smith',
         role: 'DOCTOR',
         specialty: 'Cardiology',
         description: 'Experienced cardiologist with over 15 years of practice',
@@ -22,7 +22,7 @@ async function main() {
     prisma.user.create({
       data: {
         email: 'dr.jones@example.com',
-        name: 'Dr. Sarah Jones',
+        name: 'Sarah Jones',
         role: 'DOCTOR',
         specialty: 'Pediatrics',
         description: 'Caring pediatrician dedicated to children\'s health',
@@ -32,7 +32,7 @@ async function main() {
     prisma.user.create({
       data: {
         email: 'dr.wilson@example.com',
-        name: 'Dr. Michael Wilson',
+        name: 'Michael Wilson',
         role: 'DOCTOR',
         specialty: 'Dermatology',
         description: 'Board-certified dermatologist specializing in skin health',
@@ -42,7 +42,7 @@ async function main() {
     prisma.user.create({
       data: {
         email: 'dr.brown@example.com',
-        name: 'Dr. Emily Brown',
+        name: 'Emily Brown',
         role: 'DOCTOR',
         specialty: 'Neurology',
         description: 'Expert neurologist focusing on brain and nerve disorders',
@@ -52,7 +52,7 @@ async function main() {
     prisma.user.create({
       data: {
         email: 'dr.davis@example.com',
-        name: 'Dr. Robert Davis',
+        name: 'Robert Davis',
         role: 'DOCTOR',
         specialty: 'Orthopedics',
         description: 'Skilled orthopedic surgeon with expertise in joint replacement',

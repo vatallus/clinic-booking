@@ -6,9 +6,11 @@ export default function DoctorLayout({
   children: React.ReactNode;
 }) {
   return (
-    <>
+    <div className="min-h-screen p-8">
       <ThemeSwitcher />
-      {children}
-    </>
+      <div className="mx-auto max-w-7xl">
+        {children}
+      </div>
+    </div>
   );
 } 

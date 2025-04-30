@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import Link from 'next/link'
+import { HeroSection } from '@/components/HeroSection'
+import { StatsCard } from '@/components/StatsCard'
+import { AppointmentCard } from '@/components/AppointmentCard'
 
 interface Doctor {
   name: string
@@ -133,110 +136,134 @@ export default function PatientDashboard() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Patient Dashboard</h1>
+    <div className="space-y-8">
+      {/* Header with Logout Button */}
+      <div className="flex justify-end">
         <button
           onClick={handleLogout}
-          className="bg-red-600 text-white py-2 px-4 rounded hover:bg-red-700 transition-colors"
+          className="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors"
         >
           Logout
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <Link 
-          href="/book-appointment"
-          className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow"
-        >
-          <h2 className="text-xl font-semibold mb-2">Book an Appointment</h2>
-          <p className="text-gray-600">
-            Schedule a new appointment with one of our doctors.
-          </p>
-        </Link>
+      {/* Hero Section */}
+      <HeroSection
+        title="Welcome to Our Clinic"
+        subtitle="We provide high-quality healthcare services with our professional medical team"
+        imageUrl="/images/clinic-hero.jpg"
+        role="patient"
+        actions={[
+          {
+            label: "Book Appointment",
+            href: "/book-appointment",
+            className: "bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+          },
+          {
+            label: "View History",
+            href: "/my-appointments",
+            className: "bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors"
+          }
+        ]}
+      />
 
-        <Link
-          href="/my-appointments"
-          className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow"
-        >
-          <h2 className="text-xl font-semibold mb-2">My Appointments</h2>
-          <p className="text-gray-600">
-            View and manage your existing appointments.
-          </p>
-        </Link>
+      {/* Stats Section */}
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        <StatsCard
+          title="Upcoming Appointments"
+          value={appointments.filter(a => 
+            (a.status === 'CONFIRMED' || a.status === 'PENDING') && 
+            new Date(a.date) >= new Date()
+          ).length.toString()}
+          icon={
+            <svg
+              className="h-6 w-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
+            </svg>
+          }
+          trend={{ value: 10, isPositive: true }}
+          onClick={() => router.push('/my-appointments')}
+        />
+        <StatsCard
+          title="Appointment History"
+          value={appointments.filter(a => a.status === 'COMPLETED').length.toString()}
+          icon={
+            <svg
+              className="h-6 w-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+              />
+            </svg>
+          }
+          onClick={() => router.push('/my-appointments')}
+        />
+        <StatsCard
+          title="Loyalty Points"
+          value="150"
+          icon={
+            <svg
+              className="h-6 w-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          }
+        />
       </div>
 
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          {error}
-        </div>
-      )}
-
-      {loading ? (
-        <div className="text-center py-8">Loading appointments...</div>
-      ) : appointments.length === 0 ? (
-        <div className="text-center py-8">
-          <p className="text-gray-600">No appointments scheduled.</p>
-        </div>
-      ) : (
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Doctor
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date & Time
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Symptoms
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {appointments.map((appointment) => (
-                <tr key={appointment.id}>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
-                      {appointment.doctor.name}
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      {appointment.doctor.specialty}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
-                      {new Date(appointment.date).toLocaleDateString()}
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      {appointment.time}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      appointment.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
-                      appointment.status === 'CONFIRMED' ? 'bg-green-100 text-green-800' :
-                      appointment.status === 'CANCELLED' ? 'bg-red-100 text-red-800' :
-                      'bg-blue-100 text-blue-800'
-                    }`}>
-                      {appointment.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900">
-                      {appointment.symptoms || 'No symptoms provided'}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      {/* Appointments Section */}
+      <div className="space-y-4">
+        <h2 className="text-2xl font-bold">All Appointments</h2>
+        {loading ? (
+          <div className="text-center py-8">Loading appointments...</div>
+        ) : error ? (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+            {error}
+          </div>
+        ) : appointments.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-gray-600">You don't have any appointments yet.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {appointments.map((appointment) => (
+              <AppointmentCard
+                key={appointment.id}
+                patientName="You"
+                doctorName={appointment.doctor.name}
+                date={new Date(appointment.date).toLocaleDateString()}
+                time={appointment.time}
+                status={appointment.status.toLowerCase() as "pending" | "confirmed" | "completed" | "cancelled"}
+                actionLabel="View Details"
+                onAction={() => router.push('/my-appointments')}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 } 
