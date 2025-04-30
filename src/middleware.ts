@@ -37,6 +37,21 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(redirectUrl)
   }
 
+  // Check user role for admin routes
+  if (path.startsWith('/admin')) {
+    const { data: userData } = await supabase
+      .from('User')
+      .select('role')
+      .eq('id', session.user.id)
+      .single()
+
+    if (!userData || userData.role !== 'ADMIN') {
+      const redirectUrl = req.nextUrl.clone()
+      redirectUrl.pathname = '/dashboard'
+      return NextResponse.redirect(redirectUrl)
+    }
+  }
+
   // Only apply to API routes
   if (req.nextUrl.pathname.startsWith('/api')) {
     // Add CORS headers

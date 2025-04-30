@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import Link from 'next/link'
@@ -8,13 +8,28 @@ import Link from 'next/link'
 export default function Dashboard() {
   const router = useRouter()
   const supabase = createClientComponentClient()
+  const [userRole, setUserRole] = useState('')
 
   useEffect(() => {
     const checkUser = async () => {
       const { data: { user }, error } = await supabase.auth.getUser()
       if (error || !user) {
         router.push('/login')
+        return
       }
+
+      const { data: userData } = await supabase
+        .from('User')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+      if (userData?.role === 'ADMIN') {
+        router.push('/admin/dashboard')
+        return
+      }
+
+      setUserRole(userData?.role || '')
     }
     checkUser()
   }, [router])
@@ -26,6 +41,10 @@ export default function Dashboard() {
     } catch (error) {
       console.error('Error signing out:', error)
     }
+  }
+
+  if (userRole !== 'PATIENT') {
+    return null
   }
 
   return (

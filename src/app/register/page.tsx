@@ -12,6 +12,7 @@ export default function Register() {
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [address, setAddress] = useState('')
+  const [role, setRole] = useState('PATIENT')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const supabase = createClientComponentClient()
@@ -34,7 +35,7 @@ export default function Register() {
             name,
             phone,
             address,
-            role: 'PATIENT'
+            role
           }
         }
       })
@@ -169,7 +170,7 @@ export default function Register() {
             />
           </div>
 
-          <div className="mb-6">
+          <div className="mb-4">
             <label className="block text-gray-700 mb-2" htmlFor="address">
               Address
             </label>
@@ -181,6 +182,23 @@ export default function Register() {
               onChange={(e) => setAddress(e.target.value)}
               required
             />
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-gray-700 mb-2" htmlFor="role">
+              Role
+            </label>
+            <select
+              id="role"
+              className="w-full p-2 border border-gray-300 rounded"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              required
+            >
+              <option value="PATIENT">Patient</option>
+              <option value="DOCTOR">Doctor</option>
+              <option value="ADMIN">Admin</option>
+            </select>
           </div>
 
           <button

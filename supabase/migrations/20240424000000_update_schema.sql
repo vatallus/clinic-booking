@@ -11,6 +11,9 @@ DROP POLICY IF EXISTS "Users can create appointments" ON "Appointment";
 DROP POLICY IF EXISTS "Users can update their own appointments" ON "Appointment";
 DROP POLICY IF EXISTS "Enable read access for all users" ON "User";
 DROP POLICY IF EXISTS "Enable update for admin only" ON "User";
+DROP POLICY IF EXISTS "Admin can view all appointments" ON "Appointment";
+DROP POLICY IF EXISTS "Admin can manage all users" ON "User";
+DROP POLICY IF EXISTS "Admin can view patient info in appointments" ON "User";
 
 -- Cấp quyền truy cập
 GRANT USAGE ON SCHEMA public TO postgres, anon, authenticated, service_role;
@@ -67,12 +70,12 @@ FOR SELECT
 TO anon, authenticated
 USING (role = 'DOCTOR'::"Role");
 
--- Cho phép admin cập nhật thông tin bác sĩ
-CREATE POLICY "Enable update for admin only" 
+-- Cho phép admin xem và cập nhật thông tin tất cả users
+CREATE POLICY "Admin can manage all users" 
 ON "User" 
-FOR UPDATE 
+FOR ALL 
 TO authenticated
-USING (role = 'DOCTOR'::"Role" AND auth.role() = 'admin'::text);
+USING (auth.jwt() ->> 'role' = 'ADMIN');
 
 -- Policies cho bảng Appointment
 -- Cho phép service_role thực hiện tất cả các thao tác
@@ -102,4 +105,18 @@ CREATE POLICY "Users can update their own appointments"
 ON "Appointment" 
 FOR UPDATE 
 TO authenticated
-USING ("patientId" = auth.uid()::text OR "doctorId" = auth.uid()::text); 
+USING ("patientId" = auth.uid()::text OR "doctorId" = auth.uid()::text);
+
+-- Cho phép admin xem tất cả appointments
+CREATE POLICY "Admin can view all appointments" 
+ON "Appointment" 
+FOR SELECT 
+TO authenticated
+USING (true);
+
+-- Cho phép admin xem thông tin tất cả patients
+CREATE POLICY "Admin can view all patients" 
+ON "User" 
+FOR SELECT 
+TO authenticated
+USING (true); 
