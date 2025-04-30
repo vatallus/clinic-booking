@@ -24,7 +24,7 @@ export default function Register() {
 
     try {
       console.log('Starting registration process...')
-      console.log('Form data:', { email, password, name, phone, address })
+      console.log('Form data:', { email, password, name, phone, address, role })
 
       // Sign up with Supabase Auth
       const { data, error } = await supabase.auth.signUp({
@@ -214,6 +214,7 @@ export default function Register() {
                 >
                   <option value="PATIENT">Patient</option>
                   <option value="DOCTOR">Doctor</option>
+                  <option value="ADMIN">Admin</option>
                 </select>
               </div>
 

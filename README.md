@@ -14,15 +14,11 @@ A web application for managing clinic appointments.
 1. Clone the repository:
 ```bash
 git clone https://github.com/yourusername/clinic-booking.git
-cd clinic-booking
 ```
 
 2. Install dependencies:
 ```bash
    npm install
-
-   # Additional required packages
-   npm install uuid @types/uuid
 ```
 
 3. Supabase Setup:
@@ -59,7 +55,7 @@ cd clinic-booking
    npx prisma db seed
 
    - Go to SQL Editor on Supabase
-     - Copy and paste the contents of `supabase/migrations/20240321000000_policies.sql`
+     - Copy and paste the contents of `supabase\migrations\20240424000000_update_schema.sql`
      - Run the SQL script to set up all necessary policies and permissions
    ```
 
@@ -81,10 +77,10 @@ The application will be available at http://localhost:3000
 ## Features
 
 - User authentication (login/register)
-- Doctor management
+- User management
 - Appointment booking
 - Appointment management
-- Dashboard for patients
+- Dashboard for patients, doctors, admin
 
 ## Tech Stack
 
