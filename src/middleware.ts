@@ -30,26 +30,52 @@ export async function middleware(req: NextRequest) {
   }
 
   // If user is signed in and trying to access login/register
-  // redirect to home
+  // redirect to appropriate dashboard based on role
   if (session && publicPaths.includes(path)) {
-    const redirectUrl = req.nextUrl.clone()
-    redirectUrl.pathname = '/'
-    return NextResponse.redirect(redirectUrl)
-  }
-
-  // Check user role for admin routes
-  if (path.startsWith('/admin')) {
     const { data: userData } = await supabase
       .from('User')
       .select('role')
       .eq('id', session.user.id)
       .single()
 
-    if (!userData || userData.role !== 'ADMIN') {
-      const redirectUrl = req.nextUrl.clone()
-      redirectUrl.pathname = '/dashboard'
-      return NextResponse.redirect(redirectUrl)
+    const redirectUrl = req.nextUrl.clone()
+    
+    if (userData?.role === 'ADMIN') {
+      redirectUrl.pathname = '/admin/dashboard'
+    } else if (userData?.role === 'DOCTOR') {
+      redirectUrl.pathname = '/doctor/dashboard'
+    } else if (userData?.role === 'PATIENT') {
+      redirectUrl.pathname = '/patient/dashboard'
+    } else {
+      redirectUrl.pathname = '/login'
     }
+    
+    return NextResponse.redirect(redirectUrl)
+  }
+
+  // Check user role for role-specific routes
+  const { data: userData } = await supabase
+    .from('User')
+    .select('role')
+    .eq('id', session.user.id)
+    .single()
+
+  if (path.startsWith('/admin') && userData?.role !== 'ADMIN') {
+    const redirectUrl = req.nextUrl.clone()
+    redirectUrl.pathname = '/login'
+    return NextResponse.redirect(redirectUrl)
+  }
+
+  if (path.startsWith('/doctor') && userData?.role !== 'DOCTOR') {
+    const redirectUrl = req.nextUrl.clone()
+    redirectUrl.pathname = '/login'
+    return NextResponse.redirect(redirectUrl)
+  }
+
+  if (path.startsWith('/patient') && userData?.role !== 'PATIENT') {
+    const redirectUrl = req.nextUrl.clone()
+    redirectUrl.pathname = '/login'
+    return NextResponse.redirect(redirectUrl)
   }
 
   // Only apply to API routes

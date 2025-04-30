@@ -14,6 +14,8 @@ DROP POLICY IF EXISTS "Enable update for admin only" ON "User";
 DROP POLICY IF EXISTS "Admin can view all appointments" ON "Appointment";
 DROP POLICY IF EXISTS "Admin can manage all users" ON "User";
 DROP POLICY IF EXISTS "Admin can view patient info in appointments" ON "User";
+DROP POLICY IF EXISTS "Doctors can view their appointments" ON "Appointment";
+DROP POLICY IF EXISTS "Doctors can update appointment status" ON "Appointment";
 
 -- Cấp quyền truy cập
 GRANT USAGE ON SCHEMA public TO postgres, anon, authenticated, service_role;
@@ -77,6 +79,13 @@ FOR ALL
 TO authenticated
 USING (auth.jwt() ->> 'role' = 'ADMIN');
 
+-- Cho phép admin xem thông tin tất cả patients
+CREATE POLICY "Admin can view all patients" 
+ON "User" 
+FOR SELECT 
+TO authenticated
+USING (true);
+
 -- Policies cho bảng Appointment
 -- Cho phép service_role thực hiện tất cả các thao tác
 CREATE POLICY "Service role can do everything" 
@@ -114,9 +123,26 @@ FOR SELECT
 TO authenticated
 USING (true);
 
--- Cho phép admin xem thông tin tất cả patients
-CREATE POLICY "Admin can view all patients" 
-ON "User" 
+-- Cho phép doctor xem tất cả appointments của bệnh nhân đã đăng ký với mình
+CREATE POLICY "Doctors can view their appointments" 
+ON "Appointment" 
 FOR SELECT 
 TO authenticated
-USING (true); 
+USING (
+  "doctorId" = auth.uid()::text 
+  AND (auth.jwt() ->> 'role' = 'DOCTOR')
+);
+
+-- Cho phép doctor cập nhật trạng thái appointments
+CREATE POLICY "Doctors can update appointment status" 
+ON "Appointment" 
+FOR UPDATE 
+TO authenticated
+USING (
+  "doctorId" = auth.uid()::text 
+  AND (auth.jwt() ->> 'role' = 'DOCTOR')
+)
+WITH CHECK (
+  "doctorId" = auth.uid()::text 
+  AND (auth.jwt() ->> 'role' = 'DOCTOR')
+); 
