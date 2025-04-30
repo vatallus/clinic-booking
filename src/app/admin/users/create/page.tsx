@@ -67,6 +67,7 @@ export default function CreateUser() {
         throw new Error(profileError.message)
       }
 
+      // Redirect to users list after successful creation
       router.push('/admin/users')
     } catch (error) {
       console.error('Error creating user:', error)

@@ -290,7 +290,6 @@ export default function DoctorDashboard() {
               />
             </svg>
           }
-          onClick={() => router.push('/doctor/patients')}
         />
         <StatsCard
           title="Completed Appointments"

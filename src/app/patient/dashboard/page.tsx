@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { HeroSection } from '@/components/HeroSection'
 import { StatsCard } from '@/components/StatsCard'
 import { AppointmentCard } from '@/components/AppointmentCard'
+import { AppointmentDetailModal } from '@/components/AppointmentDetailModal'
 
 interface Doctor {
   name: string
@@ -20,6 +21,7 @@ interface Appointment {
   time: string
   status: string
   symptoms: string | null
+  notes: string | null
   doctor: Doctor
 }
 
@@ -30,6 +32,8 @@ export default function PatientDashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [userRole, setUserRole] = useState('')
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   useEffect(() => {
     checkUserRole()
@@ -88,6 +92,7 @@ export default function PatientDashboard() {
           time,
           status,
           symptoms,
+          notes,
           doctor:User!Appointment_doctorId_fkey (
             name,
             specialty
@@ -129,6 +134,11 @@ export default function PatientDashboard() {
     } catch (error) {
       console.error('Error signing out:', error)
     }
+  }
+
+  const handleViewDetails = (appointment: Appointment) => {
+    setSelectedAppointment(appointment)
+    setIsModalOpen(true)
   }
 
   if (userRole !== 'PATIENT') {
@@ -258,12 +268,29 @@ export default function PatientDashboard() {
                 time={appointment.time}
                 status={appointment.status.toLowerCase() as "pending" | "confirmed" | "completed" | "cancelled"}
                 actionLabel="View Details"
-                onAction={() => router.push('/my-appointments')}
+                onAction={() => handleViewDetails(appointment)}
+                showViewDetails={false}
               />
             ))}
           </div>
         )}
       </div>
+
+      {/* Appointment Detail Modal */}
+      {selectedAppointment && (
+        <AppointmentDetailModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          appointment={{
+            patientName: "You",
+            date: new Date(selectedAppointment.date).toLocaleDateString(),
+            time: selectedAppointment.time,
+            status: selectedAppointment.status.toLowerCase() as "pending" | "confirmed" | "completed" | "cancelled",
+            symptoms: selectedAppointment.symptoms || 'No symptoms provided',
+            notes: selectedAppointment.notes || 'No notes available'
+          }}
+        />
+      )}
     </div>
   )
 } 
