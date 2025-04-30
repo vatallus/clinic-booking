@@ -224,6 +224,25 @@ export default function AdminDashboard() {
     }
   }
 
+  const handleDeleteAppointment = async (appointmentId: string) => {
+    try {
+      const { error } = await supabase
+        .from('Appointment')
+        .delete()
+        .eq('id', appointmentId)
+
+      if (error) {
+        throw new Error('Failed to delete appointment')
+      }
+
+      // Refresh the appointments list
+      fetchAppointments()
+    } catch (error) {
+      console.error('Error deleting appointment:', error)
+      setError(error instanceof Error ? error.message : 'Failed to delete appointment')
+    }
+  }
+
   if (userRole !== 'ADMIN') {
     return null
   }
@@ -351,9 +370,12 @@ export default function AdminDashboard() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <button
                         onClick={() => handleDeleteAppointment(appointment.id)}
-                        className="text-red-600 hover:text-red-900"
+                        className="text-red-600 hover:text-red-900 transition-colors"
+                        title="Delete"
                       >
-                        Delete
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
                       </button>
                     </td>
                   </tr>
