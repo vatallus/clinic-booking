@@ -1,46 +1,110 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
+// Model User được mở rộng
 model User {
-  id            String    @id @default(uuid())
-  email         String    @unique
-  name          String
-  role          Role      @default(PATIENT)
-  phone         String?
-  address       String?
-  specialty     String?
-  description   String?
-  image         String?
-  patientAppointments Appointment[] @relation("PatientAppointments")
-  doctorAppointments  Appointment[] @relation("DoctorAppointments")
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id                  String    @id @default(uuid())
+  email               String    @unique
+  name                String
+  role                Role      @default(PATIENT)
+  phone               String?
+  address             String?
+  dateOfBirth         DateTime?
+  gender              Gender?
+  insuranceNumber     String?   // Số BHYT
+  identityCard        String?   // Số CMND/CCCD
+  ethnicity           String?   // Dân tộc
+  occupation          String?   // Nghề nghiệp
+  specialty           String?   // Chuyên khoa (cho bác sĩ)
+  licenseNumber       String?   // Số chứng chỉ hành nghề (cho bác sĩ)
+  description         String?
+  image               String?
+
+  patientAppointments Appointment[]      @relation("PatientAppointments")
+  doctorAppointments  Appointment[]      @relation("DoctorAppointments")
+  patientPrescriptions Prescription[]    @relation("PatientPrescriptions")
+  doctorPrescriptions  Prescription[]    @relation("DoctorPrescriptions")
+  doctorSchedules     DoctorSchedule[]
+  medicalRecords      MedicalRecord[]    @relation("PatientMedicalRecords")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
+// Model Appointment được mở rộng
 model Appointment {
-  id        String   @id @default(uuid())
-  patientId String
-  doctorId  String
-  date      DateTime
-  time      String
-  status    Status   @default(PENDING)
-  notes     String?
-  symptoms  String?
-  patient   User     @relation("PatientAppointments", fields: [patientId], references: [id])
-  doctor    User     @relation("DoctorAppointments", fields: [doctorId], references: [id])
+  id          String            @id @default(uuid())
+  patientId   String
+  doctorId    String
+  date        DateTime
+  time        String
+  status      AppointmentStatus @default(PENDING)
+  notes       String?           // Ghi chú của bác sĩ
+  symptoms    String?           // Triệu chứng ban đầu của bệnh nhân
+  diagnosis   String?           // Chẩn đoán của bác sĩ
+  reason      String?           // Lý do khám
+
+  patient       User            @relation("PatientAppointments", fields: [patientId], references: [id], onDelete: Cascade)
+  doctor        User            @relation("DoctorAppointments", fields: [doctorId], references: [id], onDelete: Cascade)
+  medicalRecord MedicalRecord?
+  payment       Payment?
+  prescription  Prescription?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([patientId])
+  @@index([doctorId])
+  @@index([date])
+  @@index([status])
+}
+
+// Model mới: Hồ sơ bệnh án
+model MedicalRecord {
+  id            String      @id @default(uuid())
+  appointmentId String      @unique
+  patientId     String
+  appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  patient       User        @relation("PatientMedicalRecords", fields: [patientId], references: [id], onDelete: Cascade)
+  recordType    String      // Loại bệnh án (tham chiếu 29 mẫu của BYT)
+  chiefComplaint String?    // Lý do khám
+  presentIllness String?    // Bệnh sử
+  pastHistory    String?    // Tiền sử bệnh
+  examination    String?    // Khám bệnh
+  diagnosis      String?    // Chẩn đoán
+  treatment      String?    // Điều trị
+  content        Json?      // Nội dung chi tiết của bệnh án theo cấu trúc JSON
+  attachments    String[]   // Đường dẫn tới các file đính kèm
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([patientId])
+}
+
+// Model mới: Đơn thuốc
+model Prescription {
+  id            String               @id @default(uuid())
+  patientId     String
+  doctorId      String
+  appointmentId String               @unique
+  patient       User                 @relation("PatientPrescriptions", fields: [patientId], references: [id], onDelete: Cascade)
+  doctor        User                 @relation("DoctorPrescriptions", fields: [doctorId], references: [id], onDelete: Cascade)
+  appointment   Appointment          @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  details       PrescriptionDetail[]
+  notes         String?              // Lời dặn
+  diagnosis     String?              // Chẩn đoán
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -48,15 +112,122 @@ model Appointment {
   @@index([doctorId])
 }
 
+// Model mới: Chi tiết đơn thuốc
+model PrescriptionDetail {
+  id             String       @id @default(uuid())
+  prescriptionId String
+  prescription   Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+  medicineName   String       // Tên thuốc
+  dosage         String       // Liều lượng
+  quantity       Int          // Số lượng
+  unit           String       // Đơn vị (viên, gói, chai...)
+  instructions   String       // Hướng dẫn sử dụng
+  morning        Boolean      @default(false) // Sáng
+  noon           Boolean      @default(false) // Trưa
+  afternoon      Boolean      @default(false) // Chiều
+  evening        Boolean      @default(false) // Tối
+  beforeMeal     Boolean      @default(false) // Trước ăn
+  afterMeal      Boolean      @default(false) // Sau ăn
+}
+
+// Model mới: Lịch làm việc của bác sĩ
+model DoctorSchedule {
+  id        String   @id @default(uuid())
+  doctorId  String
+  doctor    User     @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  dayOfWeek Int      // 0 = Chủ nhật, 1 = Thứ 2, ..., 6 = Thứ 7
+  startTime String   // Giờ bắt đầu (HH:mm)
+  endTime   String   // Giờ kết thúc (HH:mm)
+  isActive  Boolean  @default(true) // Có hoạt động không
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([doctorId, dayOfWeek, startTime])
+  @@index([doctorId])
+}
+
+// Model mới: Ngày nghỉ của bác sĩ
+model DoctorLeave {
+  id        String   @id @default(uuid())
+  doctorId  String
+  date      DateTime // Ngày nghỉ
+  reason    String?  // Lý do nghỉ
+  isAllDay  Boolean  @default(true)
+  startTime String?  // Giờ bắt đầu nghỉ (nếu không nghỉ cả ngày)
+  endTime   String?  // Giờ kết thúc nghỉ (nếu không nghỉ cả ngày)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([doctorId])
+  @@index([date])
+}
+
+// Model mới: Thanh toán
+model Payment {
+  id            String        @id @default(uuid())
+  appointmentId String        @unique
+  appointment   Appointment   @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  amount        Float         // Số tiền
+  method        PaymentMethod // Phương thức thanh toán
+  status        PaymentStatus @default(UNPAID)
+  transactionId String?       // Mã giao dịch từ cổng thanh toán
+  paidAt        DateTime?     // Thời gian thanh toán
+  description   String?       // Mô tả chi tiết
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+}
+
+// Model mới: Dịch vụ khám
+model Service {
+  id          String  @id @default(uuid())
+  name        String  // Tên dịch vụ
+  description String? // Mô tả
+  price       Float   // Giá
+  duration    Int     // Thời gian (phút)
+  isActive    Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Enums
 enum Role {
   PATIENT
   DOCTOR
   ADMIN
 }
 
-enum Status {
+enum AppointmentStatus {
   PENDING
   CONFIRMED
   CANCELLED
   COMPLETED
+  NO_SHOW
 }
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum PaymentMethod {
+  CASH
+  VNPAY
+  MOMO
+  BANK_TRANSFER
+  ZALOPAY
+}
+
+enum PaymentStatus {
+  PAID
+  UNPAID
+  FAILED
+  REFUNDED
+}
+

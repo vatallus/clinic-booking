@@ -1,19 +1,30 @@
 import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import createIntlMiddleware from 'next-intl/middleware';
+
+// Create the internationalization middleware
+const intlMiddleware = createIntlMiddleware({
+  locales: ['vi', 'en'],
+  defaultLocale: 'vi'
+});
 
 export async function middleware(req: NextRequest) {
-  const res = NextResponse.next()
+  // First, handle internationalization
+  const intlResponse = intlMiddleware(req);
+  
+  // Then handle authentication
+  const res = intlResponse || NextResponse.next();
   const supabase = createMiddlewareClient({ req, res })
 
   // Refresh session if expired
   await supabase.auth.getSession()
 
-  // Get the current path
-  const path = req.nextUrl.pathname
+  // Get the current path (remove locale prefix)
+  const path = req.nextUrl.pathname.replace(/^\/(vi|en)/, '') || '/'
 
   // List of public paths that don't require authentication
-  const publicPaths = ['/login', '/register']
+  const publicPaths = ['/login', '/register', '/']
 
   // If the current path is public, allow access
   if (publicPaths.includes(path)) {
@@ -25,7 +36,8 @@ export async function middleware(req: NextRequest) {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) {
     const redirectUrl = req.nextUrl.clone()
-    redirectUrl.pathname = '/login'
+    const locale = req.nextUrl.pathname.match(/^\/(vi|en)/)?.[1] || 'vi'
+    redirectUrl.pathname = `/${locale}/login`
     return NextResponse.redirect(redirectUrl)
   }
 
@@ -39,15 +51,16 @@ export async function middleware(req: NextRequest) {
       .single()
 
     const redirectUrl = req.nextUrl.clone()
+    const locale = req.nextUrl.pathname.match(/^\/(vi|en)/)?.[1] || 'vi'
     
     if (userData?.role === 'ADMIN') {
-      redirectUrl.pathname = '/admin/dashboard'
+      redirectUrl.pathname = `/${locale}/admin/dashboard`
     } else if (userData?.role === 'DOCTOR') {
-      redirectUrl.pathname = '/doctor/dashboard'
+      redirectUrl.pathname = `/${locale}/doctor/dashboard`
     } else if (userData?.role === 'PATIENT') {
-      redirectUrl.pathname = '/patient/dashboard'
+      redirectUrl.pathname = `/${locale}/patient/dashboard`
     } else {
-      redirectUrl.pathname = '/login'
+      redirectUrl.pathname = `/${locale}/login`
     }
     
     return NextResponse.redirect(redirectUrl)
@@ -62,19 +75,22 @@ export async function middleware(req: NextRequest) {
 
   if (path.startsWith('/admin') && userData?.role !== 'ADMIN') {
     const redirectUrl = req.nextUrl.clone()
-    redirectUrl.pathname = '/login'
+    const locale = req.nextUrl.pathname.match(/^\/(vi|en)/)?.[1] || 'vi'
+    redirectUrl.pathname = `/${locale}/login`
     return NextResponse.redirect(redirectUrl)
   }
 
   if (path.startsWith('/doctor') && userData?.role !== 'DOCTOR') {
     const redirectUrl = req.nextUrl.clone()
-    redirectUrl.pathname = '/login'
+    const locale = req.nextUrl.pathname.match(/^\/(vi|en)/)?.[1] || 'vi'
+    redirectUrl.pathname = `/${locale}/login`
     return NextResponse.redirect(redirectUrl)
   }
 
   if (path.startsWith('/patient') && userData?.role !== 'PATIENT') {
     const redirectUrl = req.nextUrl.clone()
-    redirectUrl.pathname = '/login'
+    const locale = req.nextUrl.pathname.match(/^\/(vi|en)/)?.[1] || 'vi'
+    redirectUrl.pathname = `/${locale}/login`
     return NextResponse.redirect(redirectUrl)
   }
 
@@ -100,7 +116,9 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - public folder
+     * - api routes (handled separately)
      */
-    '/((?!_next/static|_next/image|favicon.ico|public).*)',
+    '/((?!_next/static|_next/image|favicon.ico|public|api).*)',
   ],
-} 
+}
+
